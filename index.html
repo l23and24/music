@@ -64,12 +64,15 @@
         </header>
 
         <div id="playlist" class="space-y-4">
-            <!-- Треки будуть тут -->
+            <!-- Список треків -->
         </div>
 
         <script>
             const tracks = ["1688", "24736", "113215", "119474", "159835", "210711", "233843", "275416"];
             const container = document.getElementById('playlist');
+            
+            // Отримуємо поточну адресу сторінки без index.html
+            const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
 
             container.innerHTML = tracks.map((id, index) => `
                 <div class="glass-card p-6 rounded-2xl flex flex-col" id="card-${id}" onclick="handleTrackClick('${id}')">
@@ -87,7 +90,7 @@
                         <div id="fill-${id}" class="progress-fill"></div>
                     </div>
                     <audio id="audio-${id}" preload="none">
-                        <source src="./${id}.mp3" type="audio/mpeg">
+                        <source src="${baseUrl}${id}.mp3" type="audio/mpeg">
                     </audio>
                 </div>
             `).join('');
@@ -99,20 +102,25 @@
                 const fill = document.getElementById('fill-' + id);
 
                 if (audio.paused) {
-                    // Зупиняємо всі інші
+                    // Зупиняємо всі інші треки
                     document.querySelectorAll('audio').forEach(a => {
                         a.pause();
-                        a.currentTime = 0;
                         const otherId = a.id.replace('audio-', '');
-                        document.getElementById('card-' + otherId).classList.remove('playing');
-                        document.getElementById('badge-' + otherId).innerText = "ГОТОВО";
-                        document.getElementById('badge-' + otherId).className = "status-badge bg-slate-800 text-slate-400";
+                        const otherCard = document.getElementById('card-' + otherId);
+                        const otherBadge = document.getElementById('badge-' + otherId);
+                        otherCard.classList.remove('playing');
+                        if(otherBadge.innerText !== "ВІДСУТНІЙ") {
+                            otherBadge.innerText = "ГОТОВО";
+                            otherBadge.className = "status-badge bg-slate-800 text-slate-400";
+                        }
                     });
 
                     badge.innerText = "ЗАВАНТАЖЕННЯ...";
                     badge.className = "status-badge bg-blue-500/20 text-blue-400 animate-pulse";
                     
-                    // Скидаємо аудіо та пробуємо завантажити знову
+                    // Обхід кешу та примусове завантаження
+                    const originalSrc = `${baseUrl}${id}.mp3`;
+                    audio.src = originalSrc + "?cb=" + Math.random();
                     audio.load();
                     
                     audio.play().then(() => {
@@ -121,7 +129,7 @@
                         badge.className = "status-badge bg-green-500/20 text-green-400";
                         badge.classList.remove('animate-pulse');
                     }).catch(e => {
-                        console.error("Відтворення не вдалося:", e);
+                        console.error("Помилка відтворення:", e);
                         badge.innerText = "ПОМИЛКА";
                         badge.className = "status-badge bg-red-500/20 text-red-400";
                         badge.classList.remove('animate-pulse');
@@ -135,7 +143,7 @@
 
                 audio.ontimeupdate = () => {
                     const progress = (audio.currentTime / audio.duration) * 100;
-                    fill.style.width = progress + "%";
+                    fill.style.width = (progress || 0) + "%";
                 };
 
                 audio.onended = () => {
@@ -144,10 +152,10 @@
                     fill.style.width = "0%";
                 };
                 
-                // Додаткова обробка помилок мережі
                 audio.onerror = () => {
                     badge.innerText = "ВІДСУТНІЙ";
                     badge.className = "status-badge bg-red-600 text-white";
+                    badge.classList.remove('animate-pulse');
                 };
             }
         </script>
