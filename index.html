@@ -30,10 +30,11 @@
             box-shadow: 0 0 30px rgba(14, 165, 233, 0.15);
         }
         .status-badge {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             padding: 4px 10px;
             border-radius: 6px;
-            font-weight: 700;
+            font-weight: 800;
+            text-transform: uppercase;
             letter-spacing: 0.05em;
         }
         .progress-bar {
@@ -53,35 +54,37 @@
 </head>
 <body class="text-slate-100 font-sans antialiased">
     <div class="container mx-auto px-4 py-12 max-w-3xl">
-        <header class="text-center mb-16">
+        <header class="text-center mb-12">
             <div class="inline-block p-4 rounded-2xl bg-blue-500/20 mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                 </svg>
             </div>
-            <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">Віртуальна фізика</h1>
-            <p class="text-slate-400 text-lg">Натисніть на картку для відтворення</p>
+            <h1 class="text-4xl font-extrabold text-white mb-3">Віртуальна фізика</h1>
+            <p class="text-slate-400">Оберіть композицію для прослуховування</p>
         </header>
 
         <div id="playlist" class="space-y-4">
-            <!-- Список треків -->
+            <!-- Треки завантажуються скриптом -->
         </div>
 
         <script>
             const tracks = ["1688", "24736", "113215", "119474", "159835", "210711", "233843", "275416"];
             const container = document.getElementById('playlist');
             
-            // Отримуємо поточну адресу сторінки без index.html
-            const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+            // Визначаємо базу шляху для GitHub Pages
+            const currentPath = window.location.pathname;
+            const directory = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+            const baseUrl = window.location.origin + directory;
 
             container.innerHTML = tracks.map((id, index) => `
-                <div class="glass-card p-6 rounded-2xl flex flex-col" id="card-${id}" onclick="handleTrackClick('${id}')">
+                <div class="glass-card p-5 rounded-2xl flex flex-col" id="card-${id}" onclick="handleTrackClick('${id}')">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-5">
-                            <span class="text-3xl font-black text-slate-700 font-mono">${(index + 1).toString().padStart(2, '0')}</span>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-2xl font-black text-slate-600 font-mono">${(index + 1).toString().padStart(2, '0')}</span>
                             <div>
-                                <h3 class="text-xl font-bold text-white">Композиція ${id}</h3>
-                                <p class="text-sm text-slate-500 uppercase tracking-widest mt-1">Аудіозапис</p>
+                                <h3 class="text-lg font-bold text-white leading-tight">Композиція ${id}</h3>
+                                <p class="text-xs text-slate-500 uppercase tracking-widest mt-1">Аудіозапис</p>
                             </div>
                         </div>
                         <div id="badge-${id}" class="status-badge bg-slate-800 text-slate-400">ГОТОВО</div>
@@ -89,9 +92,7 @@
                     <div class="progress-bar">
                         <div id="fill-${id}" class="progress-fill"></div>
                     </div>
-                    <audio id="audio-${id}" preload="none">
-                        <source src="${baseUrl}${id}.mp3" type="audio/mpeg">
-                    </audio>
+                    <audio id="audio-${id}" preload="none"></audio>
                 </div>
             `).join('');
 
@@ -101,39 +102,41 @@
                 const badge = document.getElementById('badge-' + id);
                 const fill = document.getElementById('fill-' + id);
 
-                if (audio.paused) {
-                    // Зупиняємо всі інші треки
+                if (audio.paused || audio.ended) {
+                    // Зупиняємо інші треки
                     document.querySelectorAll('audio').forEach(a => {
                         a.pause();
                         const otherId = a.id.replace('audio-', '');
-                        const otherCard = document.getElementById('card-' + otherId);
-                        const otherBadge = document.getElementById('badge-' + otherId);
-                        otherCard.classList.remove('playing');
-                        if(otherBadge.innerText !== "ВІДСУТНІЙ") {
-                            otherBadge.innerText = "ГОТОВО";
-                            otherBadge.className = "status-badge bg-slate-800 text-slate-400";
+                        const b = document.getElementById('badge-' + otherId);
+                        if (b.innerText !== "ВІДСУТНІЙ") {
+                            b.innerText = "ГОТОВО";
+                            b.className = "status-badge bg-slate-800 text-slate-400";
                         }
+                        document.getElementById('card-' + otherId).classList.remove('playing');
                     });
 
-                    badge.innerText = "ЗАВАНТАЖЕННЯ...";
+                    badge.innerText = "ЧЕКАЙТЕ...";
                     badge.className = "status-badge bg-blue-500/20 text-blue-400 animate-pulse";
                     
-                    // Обхід кешу та примусове завантаження
-                    const originalSrc = `${baseUrl}${id}.mp3`;
-                    audio.src = originalSrc + "?cb=" + Math.random();
+                    // Оновлюємо джерело з унікальним параметром для обходу кешу
+                    const fileUrl = `${baseUrl}${id}.mp3?v=${Date.now()}`;
+                    audio.src = fileUrl;
                     audio.load();
-                    
-                    audio.play().then(() => {
-                        card.classList.add('playing');
-                        badge.innerText = "ГРАЄ";
-                        badge.className = "status-badge bg-green-500/20 text-green-400";
-                        badge.classList.remove('animate-pulse');
-                    }).catch(e => {
-                        console.error("Помилка відтворення:", e);
-                        badge.innerText = "ПОМИЛКА";
-                        badge.className = "status-badge bg-red-500/20 text-red-400";
-                        badge.classList.remove('animate-pulse');
-                    });
+
+                    const playPromise = audio.play();
+
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            card.classList.add('playing');
+                            badge.innerText = "ГРАЄ";
+                            badge.className = "status-badge bg-green-500/20 text-green-400";
+                            badge.classList.remove('animate-pulse');
+                        }).catch(error => {
+                            console.error("Play error:", error);
+                            badge.innerText = "ПОМИЛКА";
+                            badge.className = "status-badge bg-red-500/20 text-red-400";
+                        });
+                    }
                 } else {
                     audio.pause();
                     card.classList.remove('playing');
@@ -141,17 +144,20 @@
                     badge.className = "status-badge bg-slate-800 text-slate-400";
                 }
 
+                // Оновлення прогресу
                 audio.ontimeupdate = () => {
-                    const progress = (audio.currentTime / audio.duration) * 100;
-                    fill.style.width = (progress || 0) + "%";
+                    if (audio.duration) {
+                        const progress = (audio.currentTime / audio.duration) * 100;
+                        fill.style.width = progress + "%";
+                    }
                 };
 
                 audio.onended = () => {
                     card.classList.remove('playing');
-                    badge.innerText = "ЗАВЕРШЕНО";
+                    badge.innerText = "ГОТОВО";
                     fill.style.width = "0%";
                 };
-                
+
                 audio.onerror = () => {
                     badge.innerText = "ВІДСУТНІЙ";
                     badge.className = "status-badge bg-red-600 text-white";
@@ -160,8 +166,8 @@
             }
         </script>
 
-        <footer class="mt-20 text-center text-slate-600 text-sm tracking-widest">
-            ОНЛАЙН-КАБІНЕТ ФІЗИКИ 229
+        <footer class="mt-16 text-center text-slate-600 text-xs tracking-widest uppercase">
+            Фізичний кабінет • 2024
         </footer>
     </div>
 </body>
