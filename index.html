@@ -23,24 +23,22 @@
             background: rgba(255, 255, 255, 0.15);
             border-color: rgba(56, 189, 248, 0.5);
         }
-        /* Стилізація плеєра для смарт-дошки */
         audio {
             width: 100%;
             height: 54px;
             margin-top: 15px;
-            /* Прибираємо інверсію кольорів, яка могла робити його сірим */
             border-radius: 12px;
+            display: block;
         }
-        /* Додаємо підсвітку активного треку */
         .playing {
-            border-color: #38bdf8 !important;
-            background: rgba(56, 189, 248, 0.1) !important;
+            border-color: #0ea5e9 !important;
+            background: rgba(14, 165, 233, 0.15) !important;
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.2);
         }
     </style>
 </head>
 <body class="text-slate-100 font-sans antialiased">
     <div class="container mx-auto px-4 py-8 md:py-16 max-w-4xl">
-        <!-- Заголовок -->
         <header class="text-center mb-12 md:mb-20">
             <div class="inline-flex p-5 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 mb-8 shadow-2xl shadow-blue-500/30">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 md:h-16 md:w-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -51,83 +49,93 @@
                 Конкурс "Віртуальна фізика"
             </h1>
             <p class="text-xl md:text-2xl text-slate-300 font-light">
-                Натисніть на картку або Play для відтворення
+                Натисніть на картку для відтворення звуку
             </p>
         </header>
 
-        <!-- Список з вбудованими плеєрами -->
         <main class="grid grid-cols-1 gap-8" id="playlist">
             <script>
                 const tracks = ["1688", "24736", "113215", "119474", "159835", "210711", "233843", "275416"];
                 
                 document.write(tracks.map((id, index) => `
-                    <div class="glass-card p-6 md:p-10 rounded-3xl shadow-lg" onclick="playTrack('${id}', this)">
+                    <div class="glass-card p-6 md:p-10 rounded-3xl shadow-lg" id="card-${id}" onclick="playTrack('${id}')">
                         <div class="flex items-center space-x-6 mb-4">
-                            <span class="text-blue-400 font-black text-2xl md:text-4xl opacity-50 font-mono w-12">
+                            <span class="text-blue-400 font-black text-2xl md:text-4xl opacity-50 font-mono w-12 text-center">
                                 ${(index + 1).toString().padStart(2, '0')}
                             </span>
                             <div class="flex flex-col">
-                                <span class="text-xs md:text-sm uppercase tracking-[0.3em] text-blue-300 mb-1 font-bold">Аудіозапис</span>
+                                <span class="text-xs md:text-sm uppercase tracking-[0.3em] text-blue-300 mb-1 font-bold">Аудіосупровід</span>
                                 <h2 class="text-2xl md:text-4xl font-bold text-white">Композиція ${id}</h2>
                             </div>
                         </div>
                         
                         <div class="bg-black/20 p-4 rounded-2xl">
-                            <audio id="audio-${id}" controls preload="metadata" onclick="event.stopPropagation()">
-                                <source src="${id}.mp3" type="audio/mpeg">
-                                Ваш браузер не підтримує елемент аудіо.
+                            <audio id="audio-${id}" controls preload="auto" onclick="event.stopPropagation()">
+                                <source src="${id}.mp3?v=${new Date().getTime()}" type="audio/mpeg">
+                                Ваш браузер не підтримує аудіо.
                             </audio>
                         </div>
                     </div>
                 `).join(''));
 
-                function playTrack(id, element) {
+                function playTrack(id) {
+                    const currentAudio = document.getElementById('audio-' + id);
+                    const currentCard = document.getElementById('card-' + id);
                     const allAudios = document.querySelectorAll('audio');
                     const allCards = document.querySelectorAll('.glass-card');
-                    const currentAudio = document.getElementById('audio-' + id);
-
-                    // Скидаємо стилі всіх карток
-                    allCards.forEach(card => card.classList.remove('playing'));
 
                     if (currentAudio.paused) {
                         // Зупиняємо всі інші
-                        allAudios.forEach(a => { a.pause(); a.currentTime = 0; });
-                        // Запускаємо поточний
-                        currentAudio.play().catch(error => {
-                            console.error("Помилка відтворення:", error);
+                        allAudios.forEach(a => { 
+                            a.pause(); 
                         });
-                        element.classList.add('playing');
+                        allCards.forEach(c => c.classList.remove('playing'));
+
+                        // Спроба завантажити файл, якщо він ще не готовий
+                        currentAudio.load();
+                        const playPromise = currentAudio.play();
+                        
+                        if (playPromise !== undefined) {
+                            playPromise.then(() => {
+                                currentCard.classList.add('playing');
+                            }).catch(error => {
+                                console.error("Помилка відтворення:", error);
+                                // Якщо помилка, спробуємо ще раз через секунду
+                                setTimeout(() => currentAudio.play(), 1000);
+                            });
+                        }
                     } else {
                         currentAudio.pause();
+                        currentCard.classList.remove('playing');
                     }
                 }
+
+                // Синхронізація підсвітки, якщо натиснули кнопку в самому плеєрі
+                document.addEventListener('play', function(e){
+                    const audios = document.getElementsByTagName('audio');
+                    for(let i = 0; i < audios.length; i++){
+                        if(audios[i] != e.target){
+                            audios[i].pause();
+                        }
+                    }
+                    const card = e.target.closest('.glass-card');
+                    document.querySelectorAll('.glass-card').forEach(c => c.classList.remove('playing'));
+                    if(card) card.classList.add('playing');
+                }, true);
+
+                document.addEventListener('pause', function(e){
+                    const card = e.target.closest('.glass-card');
+                    if(card) card.classList.remove('playing');
+                }, true);
             </script>
         </main>
 
         <footer class="mt-20 mb-10 text-center">
             <div class="h-px w-32 bg-gradient-to-r from-transparent via-blue-400 to-transparent mx-auto mb-8 opacity-30"></div>
             <p class="text-slate-400 text-sm md:text-base uppercase tracking-[0.4em] font-medium">
-                Онлайн-кабінет фізики 229
+                Онлайн-кабінет фізики 229 &bull; 2024
             </p>
         </footer>
     </div>
-
-    <script>
-        // Додаткова логіка зупинки через стандартні контролери
-        document.addEventListener('play', function(e){
-            const audios = document.getElementsByTagName('audio');
-            for(let i = 0; i < audios.length; i++){
-                if(audios[i] != e.target){
-                    audios[i].pause();
-                }
-            }
-            // Додаємо клас підсвітки картці при натисканні прямо на плеєр
-            e.target.closest('.glass-card').classList.add('playing');
-        }, true);
-
-        document.addEventListener('pause', function(e){
-            e.target.closest('.glass-card').classList.remove('playing');
-        }, true);
-    </script>
 </body>
 </html>
