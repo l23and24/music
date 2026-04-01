@@ -17,14 +17,24 @@
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.12);
             transition: all 0.3s ease;
+            cursor: pointer;
         }
-        /* Стилізація плеєра для смарт-дошки (збільшений розмір) */
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+        /* Стилізація плеєра для смарт-дошки */
         audio {
             width: 100%;
-            height: 50px;
+            height: 54px;
             margin-top: 15px;
-            filter: invert(100%) hue-rotate(180deg) brightness(1.5);
-            opacity: 0.8;
+            /* Прибираємо інверсію кольорів, яка могла робити його сірим */
+            border-radius: 12px;
+        }
+        /* Додаємо підсвітку активного треку */
+        .playing {
+            border-color: #38bdf8 !important;
+            background: rgba(56, 189, 248, 0.1) !important;
         }
     </style>
 </head>
@@ -41,17 +51,17 @@
                 Конкурс "Віртуальна фізика"
             </h1>
             <p class="text-xl md:text-2xl text-slate-300 font-light">
-                Натисніть "Play" для прослуховування
+                Натисніть на картку або Play для відтворення
             </p>
         </header>
 
         <!-- Список з вбудованими плеєрами -->
-        <main class="grid grid-cols-1 gap-8">
+        <main class="grid grid-cols-1 gap-8" id="playlist">
             <script>
                 const tracks = ["1688", "24736", "113215", "119474", "159835", "210711", "233843", "275416"];
                 
                 document.write(tracks.map((id, index) => `
-                    <div class="glass-card p-6 md:p-10 rounded-3xl shadow-lg">
+                    <div class="glass-card p-6 md:p-10 rounded-3xl shadow-lg" onclick="playTrack('${id}', this)">
                         <div class="flex items-center space-x-6 mb-4">
                             <span class="text-blue-400 font-black text-2xl md:text-4xl opacity-50 font-mono w-12">
                                 ${(index + 1).toString().padStart(2, '0')}
@@ -62,15 +72,35 @@
                             </div>
                         </div>
                         
-                        <!-- Вбудований плеєр з відносним шляхом -->
-                        <div class="bg-white/5 p-4 rounded-2xl">
-                            <audio controls preload="auto" onmouseover="this.play().catch(e=>{})" onfocus="this.play().catch(e=>{})">
-                                <source src="./${id}.mp3" type="audio/mpeg">
+                        <div class="bg-black/20 p-4 rounded-2xl">
+                            <audio id="audio-${id}" controls preload="metadata" onclick="event.stopPropagation()">
+                                <source src="${id}.mp3" type="audio/mpeg">
                                 Ваш браузер не підтримує елемент аудіо.
                             </audio>
                         </div>
                     </div>
                 `).join(''));
+
+                function playTrack(id, element) {
+                    const allAudios = document.querySelectorAll('audio');
+                    const allCards = document.querySelectorAll('.glass-card');
+                    const currentAudio = document.getElementById('audio-' + id);
+
+                    // Скидаємо стилі всіх карток
+                    allCards.forEach(card => card.classList.remove('playing'));
+
+                    if (currentAudio.paused) {
+                        // Зупиняємо всі інші
+                        allAudios.forEach(a => { a.pause(); a.currentTime = 0; });
+                        // Запускаємо поточний
+                        currentAudio.play().catch(error => {
+                            console.error("Помилка відтворення:", error);
+                        });
+                        element.classList.add('playing');
+                    } else {
+                        currentAudio.pause();
+                    }
+                }
             </script>
         </main>
 
@@ -83,25 +113,21 @@
     </div>
 
     <script>
-        // Зупиняємо інші треки, коли запускається один
+        // Додаткова логіка зупинки через стандартні контролери
         document.addEventListener('play', function(e){
-            var audios = document.getElementsByTagName('audio');
-            for(var i = 0, len = audios.length; i < len;i++){
+            const audios = document.getElementsByTagName('audio');
+            for(let i = 0; i < audios.length; i++){
                 if(audios[i] != e.target){
                     audios[i].pause();
                 }
             }
+            // Додаємо клас підсвітки картці при натисканні прямо на плеєр
+            e.target.closest('.glass-card').classList.add('playing');
         }, true);
 
-        // Перевірка завантаження файлів
-        window.addEventListener('load', () => {
-            const audios = document.querySelectorAll('audio');
-            audios.forEach(audio => {
-                audio.addEventListener('error', (e) => {
-                    console.error('Помилка завантаження файлу:', audio.querySelector('source').src);
-                });
-            });
-        });
+        document.addEventListener('pause', function(e){
+            e.target.closest('.glass-card').classList.remove('playing');
+        }, true);
     </script>
 </body>
 </html>
