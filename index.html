@@ -62,10 +62,10 @@
                             </div>
                         </div>
                         
-                        <!-- Вбудований плеєр -->
+                        <!-- Вбудований плеєр з відносним шляхом -->
                         <div class="bg-white/5 p-4 rounded-2xl">
-                            <audio controls>
-                                <source src="${id}.mp3" type="audio/mpeg">
+                            <audio controls preload="auto" onmouseover="this.play().catch(e=>{})" onfocus="this.play().catch(e=>{})">
+                                <source src="./${id}.mp3" type="audio/mpeg">
                                 Ваш браузер не підтримує елемент аудіо.
                             </audio>
                         </div>
@@ -92,6 +92,16 @@
                 }
             }
         }, true);
+
+        // Перевірка завантаження файлів
+        window.addEventListener('load', () => {
+            const audios = document.querySelectorAll('audio');
+            audios.forEach(audio => {
+                audio.addEventListener('error', (e) => {
+                    console.error('Помилка завантаження файлу:', audio.querySelector('source').src);
+                });
+            });
+        });
     </script>
 </body>
 </html>
