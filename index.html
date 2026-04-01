@@ -86,7 +86,9 @@
                     <div class="progress-bar">
                         <div id="fill-${id}" class="progress-fill"></div>
                     </div>
-                    <audio id="audio-${id}" src="${id}.mp3" preload="none"></audio>
+                    <audio id="audio-${id}" preload="none">
+                        <source src="./${id}.mp3" type="audio/mpeg">
+                    </audio>
                 </div>
             `).join('');
 
@@ -107,22 +109,22 @@
                         document.getElementById('badge-' + otherId).className = "status-badge bg-slate-800 text-slate-400";
                     });
 
-                    // Оновлюємо сорс з випадковим параметром для обходу кешу
-                    const currentSrc = audio.getAttribute('src').split('?')[0];
-                    audio.src = currentSrc + "?t=" + new Date().getTime();
-                    
                     badge.innerText = "ЗАВАНТАЖЕННЯ...";
                     badge.className = "status-badge bg-blue-500/20 text-blue-400 animate-pulse";
-
+                    
+                    // Скидаємо аудіо та пробуємо завантажити знову
+                    audio.load();
+                    
                     audio.play().then(() => {
                         card.classList.add('playing');
                         badge.innerText = "ГРАЄ";
                         badge.className = "status-badge bg-green-500/20 text-green-400";
                         badge.classList.remove('animate-pulse');
                     }).catch(e => {
-                        console.error(e);
+                        console.error("Відтворення не вдалося:", e);
                         badge.innerText = "ПОМИЛКА";
                         badge.className = "status-badge bg-red-500/20 text-red-400";
+                        badge.classList.remove('animate-pulse');
                     });
                 } else {
                     audio.pause();
@@ -140,6 +142,12 @@
                     card.classList.remove('playing');
                     badge.innerText = "ЗАВЕРШЕНО";
                     fill.style.width = "0%";
+                };
+                
+                // Додаткова обробка помилок мережі
+                audio.onerror = () => {
+                    badge.innerText = "ВІДСУТНІЙ";
+                    badge.className = "status-badge bg-red-600 text-white";
                 };
             }
         </script>
