@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конкурс Віртуальна Фізика</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            /* Світліший, професійний градієнт */
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* Ефект при наведенні та натисканні для сенсорних екранів */
+        .glass-card:active, .glass-card:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: scale(1.01);
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+        /* Велика кнопка Play для зручності на дошці */
+        .play-btn {
+            transition: all 0.2s ease;
+        }
+        .play-btn:active {
+            transform: scale(0.9);
+        }
+    </style>
+</head>
+<body class="text-slate-100 font-sans antialiased">
+    <div class="container mx-auto px-4 py-8 md:py-16 max-w-4xl">
+        <!-- Головний заголовок -->
+        <header class="text-center mb-12 md:mb-20">
+            <div class="inline-flex p-5 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 mb-8 shadow-2xl shadow-blue-500/30">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 md:h-16 md:w-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.691.387a2 2 0 01-1.132.252 2 2 0 01-1.132-.252l-.69-.387a6 6 0 00-3.86-.517l-2.387.477a2 2 0 00-1.022.547M12 10V2m0 8l-3-3m3 3l3-3" />
+                </svg>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight text-white mb-4">
+                Конкурс "Віртуальна фізика"
+            </h1>
+            <p class="text-xl md:text-2xl text-slate-300 font-light">
+                Оберіть аудіосупровід до вашого проекту
+            </p>
+        </header>
+
+        <!-- Список композицій -->
+        <main class="grid grid-cols-1 gap-6">
+            <script>
+                const tracks = ["1688", "24736", "113215", "119474", "159835", "210711", "233843", "275416"];
+                
+                document.write(tracks.map((id, index) => `
+                    <div class="glass-card p-6 md:p-8 rounded-3xl flex items-center justify-between group shadow-lg">
+                        <div class="flex items-center space-x-6 md:space-x-10 flex-1">
+                            <span class="text-blue-400 font-black text-2xl md:text-3xl opacity-50 font-mono w-10 md:w-12 text-center">
+                                ${(index + 1).toString().padStart(2, '0')}
+                            </span>
+                            <div class="flex flex-col">
+                                <span class="text-xs md:text-sm uppercase tracking-[0.3em] text-blue-300 mb-2 font-bold">Аудіозапис</span>
+                                <a href="${id}.mp3" class="text-xl md:text-3xl font-bold hover:text-blue-300 transition-colors">
+                                    Композиція ${id}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="flex items-center ml-4">
+                            <!-- Велика кнопка відтворення для смарт-дошки -->
+                            <a href="${id}.mp3" title="Слухати" class="play-btn p-5 md:p-7 rounded-2xl bg-blue-600/30 text-blue-300 hover:bg-blue-500 hover:text-white transition-all shadow-xl">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 md:h-12 md:w-12" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                `).join(''));
+            </script>
+        </main>
+
+        <!-- Підвал -->
+        <footer class="mt-20 mb-10 text-center">
+            <div class="h-px w-32 bg-gradient-to-r from-transparent via-blue-400 to-transparent mx-auto mb-8 opacity-30"></div>
+            <p class="text-slate-400 text-sm md:text-base uppercase tracking-[0.4em] font-medium">
+                Онлайн-кабінет фізики 229
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
