@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            /* Світліший, професійний градієнт */
             background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
             min-height: 100vh;
             display: flex;
@@ -17,26 +16,21 @@
             background: rgba(255, 255, 255, 0.07);
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.12);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
         }
-        /* Ефект при наведенні та натисканні для сенсорних екранів */
-        .glass-card:active, .glass-card:hover {
-            background: rgba(255, 255, 255, 0.12);
-            transform: scale(1.01);
-            border-color: rgba(56, 189, 248, 0.5);
-        }
-        /* Велика кнопка Play для зручності на дошці */
-        .play-btn {
-            transition: all 0.2s ease;
-        }
-        .play-btn:active {
-            transform: scale(0.9);
+        /* Стилізація плеєра для смарт-дошки (збільшений розмір) */
+        audio {
+            width: 100%;
+            height: 50px;
+            margin-top: 15px;
+            filter: invert(100%) hue-rotate(180deg) brightness(1.5);
+            opacity: 0.8;
         }
     </style>
 </head>
 <body class="text-slate-100 font-sans antialiased">
     <div class="container mx-auto px-4 py-8 md:py-16 max-w-4xl">
-        <!-- Головний заголовок -->
+        <!-- Заголовок -->
         <header class="text-center mb-12 md:mb-20">
             <div class="inline-flex p-5 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 mb-8 shadow-2xl shadow-blue-500/30">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 md:h-16 md:w-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -47,42 +41,39 @@
                 Конкурс "Віртуальна фізика"
             </h1>
             <p class="text-xl md:text-2xl text-slate-300 font-light">
-                Оберіть аудіосупровід до вашого проекту
+                Натисніть "Play" для прослуховування
             </p>
         </header>
 
-        <!-- Список композицій -->
-        <main class="grid grid-cols-1 gap-6">
+        <!-- Список з вбудованими плеєрами -->
+        <main class="grid grid-cols-1 gap-8">
             <script>
                 const tracks = ["1688", "24736", "113215", "119474", "159835", "210711", "233843", "275416"];
                 
                 document.write(tracks.map((id, index) => `
-                    <div class="glass-card p-6 md:p-8 rounded-3xl flex items-center justify-between group shadow-lg">
-                        <div class="flex items-center space-x-6 md:space-x-10 flex-1">
-                            <span class="text-blue-400 font-black text-2xl md:text-3xl opacity-50 font-mono w-10 md:w-12 text-center">
+                    <div class="glass-card p-6 md:p-10 rounded-3xl shadow-lg">
+                        <div class="flex items-center space-x-6 mb-4">
+                            <span class="text-blue-400 font-black text-2xl md:text-4xl opacity-50 font-mono w-12">
                                 ${(index + 1).toString().padStart(2, '0')}
                             </span>
                             <div class="flex flex-col">
-                                <span class="text-xs md:text-sm uppercase tracking-[0.3em] text-blue-300 mb-2 font-bold">Аудіозапис</span>
-                                <a href="${id}.mp3" class="text-xl md:text-3xl font-bold hover:text-blue-300 transition-colors">
-                                    Композиція ${id}
-                                </a>
+                                <span class="text-xs md:text-sm uppercase tracking-[0.3em] text-blue-300 mb-1 font-bold">Аудіозапис</span>
+                                <h2 class="text-2xl md:text-4xl font-bold text-white">Композиція ${id}</h2>
                             </div>
                         </div>
-                        <div class="flex items-center ml-4">
-                            <!-- Велика кнопка відтворення для смарт-дошки -->
-                            <a href="${id}.mp3" title="Слухати" class="play-btn p-5 md:p-7 rounded-2xl bg-blue-600/30 text-blue-300 hover:bg-blue-500 hover:text-white transition-all shadow-xl">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 md:h-12 md:w-12" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
-                                </svg>
-                            </a>
+                        
+                        <!-- Вбудований плеєр -->
+                        <div class="bg-white/5 p-4 rounded-2xl">
+                            <audio controls>
+                                <source src="${id}.mp3" type="audio/mpeg">
+                                Ваш браузер не підтримує елемент аудіо.
+                            </audio>
                         </div>
                     </div>
                 `).join(''));
             </script>
         </main>
 
-        <!-- Підвал -->
         <footer class="mt-20 mb-10 text-center">
             <div class="h-px w-32 bg-gradient-to-r from-transparent via-blue-400 to-transparent mx-auto mb-8 opacity-30"></div>
             <p class="text-slate-400 text-sm md:text-base uppercase tracking-[0.4em] font-medium">
@@ -90,5 +81,17 @@
             </p>
         </footer>
     </div>
+
+    <script>
+        // Зупиняємо інші треки, коли запускається один
+        document.addEventListener('play', function(e){
+            var audios = document.getElementsByTagName('audio');
+            for(var i = 0, len = audios.length; i < len;i++){
+                if(audios[i] != e.target){
+                    audios[i].pause();
+                }
+            }
+        }, true);
+    </script>
 </body>
 </html>
